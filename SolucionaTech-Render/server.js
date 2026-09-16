@@ -48,14 +48,23 @@ app.post("/api/tickets", async (request, response) => {
     if (clean(request.body.website, 100)) return response.status(201).json({ ok: true });
     if (name.length < 2 || phone.replace(/\D/g, "").length < 9 || description.length < 10) return response.status(400).json({ error: "Revisa el nombre, teléfono y descripción." });
     if (!SERVICES.includes(service) || !PRIORITIES.includes(priority)) return response.status(400).json({ error: "Servicio o prioridad no válidos." });
-    const reference = `TK-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
+    const reference = `TK-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
     await pool.query("INSERT INTO tickets(reference,name,phone,email,service,description,priority) VALUES($1,$2,$3,$4,$5,$6,$7)", [reference, name, phone, email || null, service, description, priority]);
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-      const message = `<b>🎫 Nuevo ticket ${escapeHtml(reference)}</b>\n<b>Cliente:</b> ${escapeHtml(name)}\n<b>Servicio:</b> ${escapeHtml(service)}\n<b>Prioridad:</b> ${escapeHtml(priority)}\n<b>Problema:</b> ${escapeHtml(description)}\n\n<a href="https://wa.me/${whatsappPhone(phone)}">Abrir WhatsApp</a>`;
+      const publicBase = process.env.PUBLIC_URL || `${request.protocol}://${request.get("host")}`;
+      const message = `<b>🎫 Nuevo ticket ${escapeHtml(reference)}</b>\n<b>Cliente:</b> ${escapeHtml(name)}\n<b>Servicio:</b> ${escapeHtml(service)}\n<b>Prioridad:</b> ${escapeHtml(priority)}\n<b>Problema:</b> ${escapeHtml(description)}\n\n<a href="https://wa.me/${whatsappPhone(phone)}">Abrir WhatsApp</a> · <a href="${publicBase}/admin?ticket=${encodeURIComponent(reference)}">Abrir en el panel</a>`;
       await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML", disable_web_page_preview: true }) }).catch(error => console.error("telegram_error", error));
     }
     response.status(201).json({ ok: true, reference });
   } catch (error) { console.error(error); response.status(500).json({ error: "No se pudo crear el ticket." }); }
+});
+
+app.get("/api/tickets/status/:reference", async (request, response) => {
+  const reference = clean(request.params.reference, 80).toUpperCase();
+  if (!/^TK-[A-Z0-9]+-[A-F0-9]{4,24}$/.test(reference)) return response.status(400).json({ error: "Referencia no válida." });
+  const result = await pool.query("SELECT reference, service, priority, status, created_at, updated_at FROM tickets WHERE reference=$1", [reference]);
+  if (!result.rowCount) return response.status(404).json({ error: "No se encontró ningún ticket con esa referencia." });
+  response.json({ ticket: result.rows[0] });
 });
 
 app.post("/api/admin/login", (request, response) => {
@@ -67,9 +76,11 @@ app.post("/api/admin/login", (request, response) => {
 app.post("/api/admin/logout", (_request, response) => response.clearCookie("solucionatech_admin", { path: "/" }).json({ ok: true }));
 app.get("/api/admin/tickets", requireAdmin, async (request, response) => {
   const status = clean(request.query.status, 30) || "active", priority = clean(request.query.priority, 20) || "all";
+  const reference = clean(request.query.reference, 80).toUpperCase();
   const values = [], where = [];
   if (status === "active") where.push("status <> 'Resuelto'"); else if (status === "resolved") where.push("status = 'Resuelto'"); else if (STATUSES.includes(status)) { values.push(status); where.push(`status = $${values.length}`); }
   if (PRIORITIES.includes(priority)) { values.push(priority); where.push(`priority = $${values.length}`); }
+  if (reference) { values.push(`%${reference}%`); where.push(`reference ILIKE $${values.length}`); }
   const result = await pool.query(`SELECT * FROM tickets ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY CASE priority WHEN 'Urgente' THEN 1 WHEN 'Alta' THEN 2 ELSE 3 END, created_at DESC LIMIT 250`, values);
   response.json({ tickets: result.rows });
 });
@@ -79,6 +90,21 @@ app.patch("/api/admin/tickets/:id", requireAdmin, async (request, response) => {
   const result = await pool.query("UPDATE tickets SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *", [status, id]);
   if (!result.rowCount) return response.status(404).json({ error: "Ticket no encontrado" });
   response.json({ ticket: result.rows[0] });
+});
+
+app.get("/api/admin/tickets/:id/notes", requireAdmin, async (request, response) => {
+  const id = Number(request.params.id);
+  if (!Number.isInteger(id)) return response.status(400).json({ error: "Ticket no válido" });
+  const result = await pool.query("SELECT id, note, created_at FROM ticket_notes WHERE ticket_id=$1 ORDER BY created_at DESC", [id]);
+  response.json({ notes: result.rows });
+});
+
+app.post("/api/admin/tickets/:id/notes", requireAdmin, async (request, response) => {
+  const id = Number(request.params.id), note = clean(request.body.note, 1500);
+  if (!Number.isInteger(id) || note.length < 2) return response.status(400).json({ error: "Escribe una nota válida." });
+  const result = await pool.query("INSERT INTO ticket_notes(ticket_id,note) SELECT id,$2 FROM tickets WHERE id=$1 RETURNING id,note,created_at", [id, note]);
+  if (!result.rowCount) return response.status(404).json({ error: "Ticket no encontrado" });
+  response.status(201).json({ note: result.rows[0] });
 });
 
 await initDatabase();

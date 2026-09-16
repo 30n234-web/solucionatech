@@ -14,3 +14,12 @@ CREATE TABLE IF NOT EXISTS tickets (
 
 CREATE INDEX IF NOT EXISTS idx_tickets_status_created ON tickets(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_tickets_priority_created ON tickets(priority, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS ticket_notes (
+  id BIGSERIAL PRIMARY KEY,
+  ticket_id BIGINT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  note TEXT NOT NULL CHECK (char_length(note) BETWEEN 2 AND 1500),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_notes_ticket_created ON ticket_notes(ticket_id, created_at DESC);
