@@ -1,152 +1,123 @@
-const login = document.querySelector('#login');
-const dashboard = document.querySelector('#dashboard');
-const container = document.querySelector('#tickets');
-const summary = document.querySelector('#summary');
-let tickets = [];
-
-const initialReference = new URLSearchParams(location.search).get('ticket') || '';
-document.querySelector('#search').value = initialReference;
-
-const styles = {
-  Nuevo: 'bg-blue-100 text-blue-800',
-  Contactado: 'bg-cyan-100 text-cyan-800',
-  'En curso': 'bg-violet-100 text-violet-800',
-  'Esperando respuesta': 'bg-amber-100 text-amber-900',
-  Resuelto: 'bg-emerald-100 text-emerald-800'
-};
-const statuses = ['Nuevo', 'Contactado', 'En curso', 'Esperando respuesta', 'Resuelto'];
-const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]));
-const phone = value => { const digits = value.replace(/\D/g, ''); return digits.startsWith('34') ? digits : `34${digits}`; };
-
+import { api, esc, money, dateTime } from "/shared.js";
+const $ = selector => document.querySelector(selector);
+const login = $("#login"), dashboard = $("#dashboard"), dialog = $("#ticketDialog");
+let tickets = [], labels = {}, currentId, truncated = false, requestNumber = 0;
+const initialReference = new URLSearchParams(location.search).get("ticket") || "";
+$("#search").value = initialReference;
+if (initialReference) $("#statusFilter").value = "all";
+function errorAt(selector, error) {
+  const box = $(selector);
+  box.textContent = error.message;
+  box.hidden = false;
+  if (error.status === 401) {
+    dialog.close(); dashboard.hidden = true; login.hidden = false;
+    tickets = []; $("#tickets").replaceChildren(); $("#detail").replaceChildren(); $("#notes").replaceChildren();
+  }
+}
 async function load() {
-  const status = document.querySelector('#statusFilter').value;
-  const priority = document.querySelector('#priorityFilter').value;
-  const response = await fetch(`/api/admin/tickets?status=${encodeURIComponent(status)}&priority=${encodeURIComponent(priority)}`);
-  if (response.status === 401) {
-    login.classList.remove('hidden');
-    dashboard.classList.add('hidden');
-    return;
-  }
-  tickets = (await response.json()).tickets;
-  login.classList.add('hidden');
-  dashboard.classList.remove('hidden');
-  render();
+  const number = ++requestNumber;
+  $("#adminError").hidden = true;
+  try {
+    const params = new URLSearchParams({ status: $("#statusFilter").value, priority: $("#priorityFilter").value, urgency: $("#urgencyFilter").value });
+    if (initialReference && $("#search").value === initialReference) params.set("reference", initialReference);
+    const [data, counts] = await Promise.all([api("/api/admin/tickets?" + params), api("/api/admin/metrics")]);
+    if (number !== requestNumber) return;
+    tickets = data.tickets; truncated = data.truncated;
+    login.hidden = true; dashboard.hidden = false;
+    $("#metrics").innerHTML = [["pending", "Pendientes"], ["urgent", "Urgentes pendientes"], ["resolved", "Resueltos"], ["closed", "Cerrados"], ["total", "Total"]].map(([key, title]) =>
+      `<div class="metric"><strong>${esc(counts.metrics[key])}</strong><span>${title}</span></div>`).join("");
+    render();
+  } catch (error) { if (number === requestNumber) errorAt("#adminError", error); }
 }
-
 function render() {
-  const query = document.querySelector('#search').value.toLowerCase();
-  const shown = tickets.filter(ticket => `${ticket.reference} ${ticket.name} ${ticket.phone} ${ticket.service} ${ticket.description}`.toLowerCase().includes(query));
-  summary.textContent = `${shown.length} ticket${shown.length === 1 ? '' : 's'} en esta vista`;
-  container.innerHTML = shown.length ? shown.map(ticket => `
-    <article class="rounded-3xl border bg-white p-5 shadow-sm">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div class="flex flex-wrap gap-2">
-            <span class="font-mono text-xs font-bold text-slate-500">${esc(ticket.reference)}</span>
-            <span class="rounded-full px-2.5 py-1 text-xs font-bold ${styles[ticket.status]}">${esc(ticket.status)}</span>
-            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold">${esc(ticket.priority)}</span>
-          </div>
-          <h2 class="mt-3 text-xl font-black">${esc(ticket.name)}</h2>
-          <p class="mt-1 text-sm text-slate-500">${new Date(ticket.created_at).toLocaleString('es-ES')}</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button data-id="${ticket.id}" class="details-toggle rounded-xl border px-4 py-2 text-sm font-bold">Ver ticket y notas</button>
-          <a class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white" target="_blank" rel="noopener" href="https://wa.me/${phone(ticket.phone)}">WhatsApp</a>
-        </div>
-      </div>
-      <div class="mt-5 grid gap-4 border-t pt-5 lg:grid-cols-[1fr_250px]">
-        <div>
-          <b class="text-sm">${esc(ticket.service)}</b>
-          <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">${esc(ticket.description)}</p>
-          <p class="mt-3 text-sm text-slate-500">${esc(ticket.phone)}${ticket.email ? ` · ${esc(ticket.email)}` : ''}</p>
-        </div>
-        <label class="grid gap-2 text-sm font-bold">Actualizar estado
-          <select data-id="${ticket.id}" class="status h-10 rounded-xl border bg-white px-3 font-normal">${statuses.map(status => `<option ${status === ticket.status ? 'selected' : ''}>${status}</option>`).join('')}</select>
-        </label>
-      </div>
-      <section data-details-id="${ticket.id}" class="ticket-details mt-5 hidden rounded-2xl bg-slate-50 p-4 sm:p-5">
-        <p class="text-sm font-bold text-slate-500">Cargando notas…</p>
-      </section>
-    </article>`).join('') : '<div class="rounded-3xl border border-dashed bg-white p-12 text-center"><b>No hay tickets en esta vista</b></div>';
-
-  document.querySelectorAll('.status').forEach(element => element.addEventListener('change', () => update(element.dataset.id, element.value)));
-  document.querySelectorAll('.details-toggle').forEach(element => element.addEventListener('click', () => toggleDetails(element)));
+  const query = $("#search").value.toLocaleLowerCase("es");
+  const shown = tickets.filter(ticket => [ticket.reference, ticket.name, ticket.phone, ticket.service, ticket.description, ticket.category, ticket.device].join(" ").toLocaleLowerCase("es").includes(query));
+  $("#summary").textContent = `${shown.length} solicitudes en esta vista.${truncated ? " Se muestran como máximo 250 tickets. Acota los filtros; la búsqueda se aplica a esta vista." : ""}`;
+  $("#tickets").innerHTML = shown.length ? shown.map(ticket => `<tr>
+    <td data-label="Ticket / cliente"><strong>${esc(ticket.name)}</strong><small class="reference">${esc(ticket.reference)}</small><small>${dateTime(ticket.created_at)}</small></td>
+    <td data-label="Servicio">${esc(ticket.service)}<small>${esc(ticket.category || "Categoría sin especificar")} · ${esc(ticket.device || "Dispositivo sin especificar")}</small></td>
+    <td data-label="Estado"><span class="badge">${esc(labels[ticket.status] || ticket.status)}</span></td>
+    <td data-label="Prioridad / urgencia">${esc(ticket.priority === "Alta" ? "Importante" : ticket.priority)}<small>${ticket.urgency_requested ? "Suplemento solicitado: +" + money(ticket.urgency_fee_cents) : "Sin suplemento"}</small></td>
+    <td><button class="secondary" data-id="${esc(ticket.id)}" aria-label="Gestionar ticket de ${esc(ticket.name)}">Gestionar</button></td></tr>`).join("") : '<tr><td colspan="5">No hay tickets que coincidan con estos filtros.</td></tr>';
 }
-
-async function toggleDetails(button) {
-  const id = button.dataset.id;
-  const details = document.querySelector(`[data-details-id="${id}"]`);
-  const opening = details.classList.contains('hidden');
-  details.classList.toggle('hidden');
-  button.textContent = opening ? 'Cerrar detalle' : 'Ver ticket y notas';
-  if (opening) await loadNotes(id, details);
-}
-
-async function loadNotes(id, details) {
-  const response = await fetch(`/api/admin/tickets/${id}/notes`);
-  if (!response.ok) {
-    details.innerHTML = '<p class="text-sm font-bold text-red-600">No se pudieron cargar las notas.</p>';
-    return;
-  }
-  const notes = (await response.json()).notes;
-  details.innerHTML = `
-    <h3 class="font-black">Notas internas</h3>
-    <p class="mt-1 text-xs text-slate-500">Solo son visibles desde el panel administrativo.</p>
-    <form class="mt-4 grid gap-3">
-      <textarea name="note" required minlength="2" maxlength="1500" rows="3" class="rounded-xl border bg-white p-3 text-sm" placeholder="Ej.: Cliente contactado. Pendiente de confirmar disponibilidad."></textarea>
-      <button class="w-fit rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Añadir nota</button>
-      <p class="note-error hidden text-sm font-bold text-red-600"></p>
-    </form>
-    <div class="notes-list mt-5 grid gap-3">${notes.length ? notes.map(note => noteMarkup(note)).join('') : '<p class="text-sm text-slate-500">Todavía no hay notas internas.</p>'}</div>`;
-  details.querySelector('form').addEventListener('submit', event => addNote(event, id, details));
-}
-
-function noteMarkup(note) {
-  return `<article class="rounded-xl border bg-white p-4"><p class="whitespace-pre-wrap text-sm leading-6">${esc(note.note)}</p><time class="mt-2 block text-xs text-slate-500">${new Date(note.created_at).toLocaleString('es-ES')}</time></article>`;
-}
-
-async function addNote(event, id, details) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const button = form.querySelector('button');
-  const error = form.querySelector('.note-error');
-  const note = new FormData(form).get('note');
-  button.disabled = true;
-  button.textContent = 'Guardando…';
-  error.classList.add('hidden');
-  const response = await fetch(`/api/admin/tickets/${id}/notes`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) });
-  const result = await response.json();
-  if (!response.ok) {
-    error.textContent = result.error || 'No se pudo guardar la nota.';
-    error.classList.remove('hidden');
-    button.disabled = false;
-    button.textContent = 'Añadir nota';
-    return;
-  }
-  await loadNotes(id, details);
-}
-
-async function update(id, status) {
-  const response = await fetch(`/api/admin/tickets/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status }) });
-  if (response.ok) await load();
-}
-
-login.querySelector('form').addEventListener('submit', async event => {
-  event.preventDefault();
-  const password = new FormData(event.currentTarget).get('password');
-  const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password }) });
-  if (!response.ok) {
-    const error = login.querySelector('.error');
-    error.textContent = 'Clave incorrecta.';
-    error.classList.remove('hidden');
-    return;
-  }
-  await load();
+$("#tickets").addEventListener("click", event => {
+  const button = event.target.closest("[data-id]");
+  if (button) openTicket(button.dataset.id);
 });
-
-document.querySelector('#logout').addEventListener('click', async () => { await fetch('/api/admin/logout', { method: 'POST' }); location.reload(); });
-document.querySelector('#refresh').addEventListener('click', load);
-document.querySelector('#search').addEventListener('input', render);
-document.querySelector('#statusFilter').addEventListener('change', load);
-document.querySelector('#priorityFilter').addEventListener('change', load);
-load();
+async function openTicket(id) {
+  const ticket = tickets.find(item => String(item.id) === String(id));
+  if (!ticket) return;
+  currentId = ticket.id;
+  $("#detailError").hidden = true; $("#savedStatus").textContent = ""; $("#noteForm").reset();
+  $("#dialogTitle").textContent = "Ticket " + ticket.reference;
+  $("#detail").innerHTML = `<dl class="detail-grid"><div><dt>Cliente</dt><dd>${esc(ticket.name)}</dd></div><div><dt>Contacto</dt><dd>${esc(ticket.phone)}<br>${esc(ticket.email || "")}</dd></div><div><dt>Categoría / dispositivo</dt><dd>${esc(ticket.category || "Sin especificar")} · ${esc(ticket.device || "Sin especificar")}</dd></div><div><dt>Suplemento solicitado</dt><dd>${ticket.urgency_requested ? "+" + money(ticket.urgency_fee_cents) + " · sujeto a confirmación" : "No"}</dd></div></dl>
+    <h3>${esc(ticket.service)}</h3><p class="pre-wrap">${esc(ticket.description)}</p>`;
+  const digits = ticket.phone.replace(/\D/g, "");
+  if (digits) {
+    const link = document.createElement("a");
+    link.className = "button secondary"; link.target = "_blank"; link.rel = "noopener";
+    link.href = "https://wa.me/" + (digits.startsWith("34") ? digits : "34" + digits);
+    link.textContent = "Contactar por WhatsApp"; $("#detail").append(link);
+  }
+  $("#statusEdit").elements.status.value = ticket.status;
+  dialog.showModal();
+  await loadNotes(ticket.id);
+}
+async function loadNotes(id) {
+  $("#notes").textContent = "Cargando notas…";
+  try {
+    const result = await api(`/api/admin/tickets/${id}/notes`);
+    if (String(currentId) !== String(id)) return;
+    $("#notes").innerHTML = result.notes.length ? result.notes.map(note => `<article class="note"><p class="pre-wrap">${esc(note.note)}</p><time datetime="${esc(note.created_at)}">${dateTime(note.created_at)}</time></article>`).join("") : "<p>No hay notas internas.</p>";
+  } catch (error) { errorAt("#detailError", error); $("#notes").textContent = ""; }
+}
+$("#statusEdit").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector("button"), id = currentId;
+  button.disabled = true; $("#detailError").hidden = true;
+  try {
+    await api(`/api/admin/tickets/${id}`, { method: "PATCH", body: JSON.stringify({ status: event.currentTarget.elements.status.value }) });
+    $("#savedStatus").textContent = "Estado guardado. El cliente puede verlo en el seguimiento.";
+    await load();
+  } catch (error) { errorAt("#detailError", error); }
+  finally { button.disabled = false; }
+});
+$("#noteForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget, button = form.querySelector("button"), id = currentId;
+  button.disabled = true; $("#detailError").hidden = true;
+  try {
+    await api(`/api/admin/tickets/${id}/notes`, { method: "POST", body: JSON.stringify({ note: form.elements.note.value }) });
+    form.reset(); await loadNotes(id);
+  } catch (error) { errorAt("#detailError", error); }
+  finally { button.disabled = false; }
+});
+login.querySelector("form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget, button = form.querySelector("button");
+  button.disabled = true; $("#loginError").hidden = true;
+  try {
+    await api("/api/admin/login", { method: "POST", body: JSON.stringify({ password: form.elements.password.value }) });
+    form.reset(); await load();
+  } catch (error) { errorAt("#loginError", error); }
+  finally { button.disabled = false; }
+});
+$("#closeDialog").addEventListener("click", () => dialog.close());
+$("#logout").addEventListener("click", async () => {
+  try { await api("/api/admin/logout", { method: "POST" }); location.reload(); }
+  catch (error) { errorAt("#adminError", error); }
+});
+$("#refresh").addEventListener("click", load);
+$("#search").addEventListener("input", render);
+for (const id of ["statusFilter", "priorityFilter", "urgencyFilter"]) $("#" + id).addEventListener("change", load);
+async function initialize() {
+  try {
+    const config = await api("/api/config"); labels = config.statuses;
+    for (const [code, label] of Object.entries(labels)) {
+      $("#statusFilter").add(new Option(label, code));
+      $("#statusEdit").elements.status.add(new Option(label, code));
+    }
+    await load();
+  } catch (error) { errorAt("#loginError", error); }
+}
+initialize();

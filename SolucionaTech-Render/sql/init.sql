@@ -23,3 +23,4 @@ CREATE TABLE IF NOT EXISTS ticket_notes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ticket_notes_ticket_created ON ticket_notes(ticket_id, created_at DESC);
+

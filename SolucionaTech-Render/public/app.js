@@ -1,8 +1,123 @@
-const services=["Diagnóstico previo","Configuración básica / periféricos / impresoras","Optimización y puesta a punto de PC lento","Desinfección de malware / virus","Instalación de sistema operativo sin formateo","Formateo completo e instalación limpia","Otro / no estoy seguro"];
-const prices=[["Diagnóstico previo","10 €","Descontable si se repara"],["Configuración básica, periféricos o impresoras","15 €","Instalación y ajustes esenciales"],["Optimización de PC lento","20 €","Limpieza lógica y puesta a punto"],["Desinfección de malware o virus","25 €","Análisis, eliminación y comprobación"],["Instalación de SO sin formateo","25 €","Actualización conservando datos"],["Formateo e instalación limpia","35 €","Instalación completa desde cero"],["Urgencia fin de semana / mismo día","+10 €","Suplemento sobre el servicio"]];
-document.querySelector('[name=service]').insertAdjacentHTML('beforeend',services.map(s=>`<option>${s}</option>`).join(''));
-document.querySelector('#prices').innerHTML=prices.map((p,i)=>`<div class="grid gap-2 px-5 py-5 sm:grid-cols-[1fr_auto] ${i?'border-t':''}"><div><b>${p[0]}</b><p class="mt-1 text-sm text-slate-500">${p[2]}</p></div><span class="w-fit rounded-full bg-blue-50 px-3 py-1 text-lg font-black text-blue-700">${p[1]}</span></div>`).join('');
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const statusStyles={Nuevo:'bg-blue-100 text-blue-800',Contactado:'bg-cyan-100 text-cyan-800','En curso':'bg-violet-100 text-violet-800','Esperando respuesta':'bg-amber-100 text-amber-900',Resuelto:'bg-emerald-100 text-emerald-800'};
-document.querySelector('#ticketForm').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,button=form.querySelector('button'),feedback=document.querySelector('#feedback');button.disabled=true;button.textContent='Enviando…';feedback.classList.add('hidden');try{const body=Object.fromEntries(new FormData(form));const response=await fetch('/api/tickets',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw new Error(result.error);feedback.className='rounded-xl bg-emerald-50 px-4 py-4 text-sm text-emerald-800';feedback.innerHTML=`<b>Ticket recibido.</b><br>Tu referencia privada es <button type="button" id="copyReference" class="mt-2 rounded-lg border border-emerald-300 bg-white px-3 py-2 font-mono font-black">${esc(result.reference)} · Copiar</button><p class="mt-2 font-normal">Guárdala para consultar el estado de tu solicitud.</p>`;document.querySelector('#copyReference').addEventListener('click',async()=>{await navigator.clipboard.writeText(result.reference);document.querySelector('#copyReference').textContent=`${result.reference} · Copiado`});form.reset()}catch(error){feedback.className='rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700';feedback.textContent=error.message||'No se pudo enviar.'}finally{button.disabled=false;button.textContent='Abrir ticket gratis'}});
-document.querySelector('#statusForm').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,button=form.querySelector('button'),resultBox=document.querySelector('#statusResult'),reference=new FormData(form).get('reference').trim().toUpperCase();button.disabled=true;button.textContent='Consultando…';try{const response=await fetch(`/api/tickets/status/${encodeURIComponent(reference)}`);const result=await response.json();if(!response.ok)throw new Error(result.error);const t=result.ticket;resultBox.className='mt-5 rounded-2xl border bg-slate-50 p-5';resultBox.innerHTML=`<div class="flex flex-wrap items-center justify-between gap-3"><span class="font-mono text-sm font-bold text-slate-500">${esc(t.reference)}</span><span class="rounded-full px-3 py-1 text-sm font-bold ${statusStyles[t.status]||'bg-slate-100'}">${esc(t.status)}</span></div><p class="mt-4 font-bold">${esc(t.service)}</p><p class="mt-2 text-sm text-slate-600">Prioridad: ${esc(t.priority)}</p><p class="mt-1 text-sm text-slate-600">Última actualización: ${new Date(t.updated_at).toLocaleString('es-ES')}</p>`}catch(error){resultBox.className='mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700';resultBox.textContent=error.message||'No se pudo consultar el ticket.'}finally{button.disabled=false;button.textContent='Consultar estado'}});
+import { api, esc, money, dateTime, setupMenu } from "/shared.js";
+setupMenu();
+const form = document.querySelector("#ticketForm");
+const submit = document.querySelector("#submitTicket");
+const feedback = document.querySelector("#feedback");
+let config;
+let available = false;
+let serverOffset = 0;
+function withinHours() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: config.schedule.timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date(Date.now() + serverOffset)).map(part => [part.type, part.value]));
+  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+  return ["Sat", "Sun"].includes(parts.weekday) && minutes >= config.schedule.startHour * 60 && minutes < config.schedule.endHour * 60;
+}
+function refreshHours() {
+  if (!config || !available) return;
+  const inside = withinHours();
+  document.querySelector("#hoursNotice").textContent = inside
+    ? "Estamos dentro del horario ordinario. La prioridad no garantiza atención inmediata."
+    : "Ahora estamos fuera del horario ordinario. Puedes dejar tu solicitud sin suplemento o solicitar atención extraordinaria.";
+  document.querySelector("#urgencyOptions").hidden = inside;
+  if (inside) {
+    form.elements.urgencyRequested.value = "false";
+    form.elements.urgencyAccepted.checked = false;
+  }
+  const requested = !inside && form.elements.urgencyRequested.value === "true";
+  document.querySelector("#feeConsent").hidden = !requested;
+  form.elements.urgencyAccepted.required = requested;
+}
+async function loadConfig(first = false) {
+  const latest = await api("/api/config");
+  const changedFee = config && config.schedule.urgencyFeeCents !== latest.schedule.urgencyFeeCents;
+  config = latest;
+  serverOffset = Date.parse(config.serverTime) - Date.now();
+  available = true;
+  if (changedFee) form.elements.urgencyAccepted.checked = false;
+  const hours = `Sábados y domingos · ${String(config.schedule.startHour).padStart(2, "0")}:00–${String(config.schedule.endHour).padStart(2, "0")}:00`;
+  document.querySelectorAll("[data-schedule]").forEach(node => { node.textContent = hours; });
+  document.querySelector("#feeLabel").textContent = "+" + money(config.schedule.urgencyFeeCents);
+  if (first) {
+    for (const [field, list] of [["service", config.services], ["category", config.categories], ["device", config.devices]]) {
+      for (const value of list) form.elements[field].add(new Option(value, value));
+    }
+  }
+  document.querySelector("#prices").innerHTML = config.prices.map(([name, price, description]) => `<div class="price-row"><div><strong>${esc(name)}</strong><p>${esc(description)}</p></div><span class="price-value">${money(price * 100)}</span></div>`).join("") +
+    `<div class="price-row"><div><strong>Atención extraordinaria fuera de horario</strong><p>Sujeta a disponibilidad y confirmación. Se suma al servicio; no se cobra al abrir el ticket.</p></div><span class="price-value">+${money(config.schedule.urgencyFeeCents)}</span></div>`;
+  submit.disabled = false;
+  refreshHours();
+}
+form.elements.urgencyRequested.forEach(input => input.addEventListener("change", refreshHours));
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!available) return;
+  submit.disabled = true;
+  submit.textContent = "Enviando…";
+  feedback.hidden = true;
+  try {
+    const body = Object.fromEntries(new FormData(form));
+    body.urgencyRequested = body.urgencyRequested === "true";
+    body.urgencyAccepted = form.elements.urgencyAccepted.checked;
+    body.urgencyFeeCents = config.schedule.urgencyFeeCents;
+    body.privacyVersion = config.privacyVersion;
+    const result = await api("/api/tickets", { method: "POST", body: JSON.stringify(body) });
+    if (!result.reference) throw new Error("No se recibió una referencia. Inténtalo de nuevo.");
+    feedback.className = "success";
+    feedback.innerHTML = `<strong>Ticket recibido.</strong><p class="reference">${esc(result.reference)}</p><button type="button" class="secondary" id="copyReference">Copiar referencia</button><p>Guárdala para consultar tu solicitud.${result.urgencyRequested ? " Urgencia solicitada; pendiente de confirmar disponibilidad. No se ha realizado ningún cobro." : ""}</p>`;
+    document.querySelector("#copyReference").addEventListener("click", async event => {
+      try { await navigator.clipboard.writeText(result.reference); event.target.textContent = "Referencia copiada"; }
+      catch { event.target.textContent = "Selecciona y copia la referencia de arriba"; }
+    });
+    document.querySelector("#statusForm").elements.reference.value = result.reference;
+    form.reset();
+    refreshHours();
+  } catch (error) {
+    feedback.className = "error";
+    feedback.textContent = error.message;
+    if (error.status === 409) {
+      form.elements.urgencyAccepted.checked = false;
+      try { await loadConfig(); } catch { available = false; }
+    }
+  } finally {
+    feedback.hidden = false;
+    submit.disabled = !available;
+    submit.textContent = "Abrir ticket gratis";
+  }
+});
+document.querySelector("#statusForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const statusForm = event.currentTarget, button = statusForm.querySelector("button"), box = document.querySelector("#statusResult");
+  button.disabled = true;
+  button.textContent = "Consultando…";
+  box.hidden = true;
+  try {
+    const reference = statusForm.elements.reference.value.trim().toUpperCase();
+    const result = await api("/api/tickets/status/" + encodeURIComponent(reference));
+    const ticket = result.ticket;
+    const labels = config?.statuses || {};
+    box.className = "";
+    box.innerHTML = `<div class="status-head"><span class="reference">${esc(ticket.reference)}</span><span class="badge">${esc(ticket.statusLabel || ticket.status)}</span></div>
+    <p><strong>${esc(ticket.service)}</strong><br>Prioridad: ${esc(ticket.priority === "Alta" ? "Importante" : ticket.priority)}<br><small>Última actualización: ${dateTime(ticket.updated_at)}</small></p>
+    ${ticket.urgency_requested ? `<p class="notice">Atención extraordinaria solicitada (+${money(ticket.urgency_fee_cents)}), sujeta a confirmación.</p>` : ""}
+    <div class="state-list" aria-label="Estados posibles del ticket">${Object.entries(labels).map(([code, label]) => `<span class="badge ${ticket.status === code ? "current" : ""}" ${ticket.status === code ? 'aria-current="step"' : ""}>${esc(label)}</span>`).join("")}</div>
+    <h3>Historial de tu solicitud</h3><ol class="timeline">${result.history.map(item => `<li><strong>${esc(item.label || item.status)}</strong><time datetime="${esc(item.created_at)}">${dateTime(item.created_at)}</time>${item.kind === "snapshot" ? "<small>Último estado conocido antes de incorporar el historial.</small>" : ""}</li>`).join("")}</ol>`;
+  } catch (error) { box.className = "error"; box.textContent = error.message; }
+  finally { box.hidden = false; button.disabled = false; button.textContent = "Consultar estado"; }
+});
+loadConfig(true).catch(error => {
+  available = false;
+  feedback.hidden = false;
+  feedback.className = "error";
+  feedback.textContent = "No se pudo cargar el formulario. Recarga la página para intentarlo de nuevo.";
+  document.querySelector("#prices").textContent = "No se pudieron cargar las tarifas.";
+  document.querySelector("#hoursNotice").textContent = "Horario temporalmente no disponible.";
+});
+setInterval(refreshHours, 30000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && config) loadConfig().catch(() => {
+    available = false; submit.disabled = true;
+    feedback.hidden = false; feedback.className = "error";
+    feedback.textContent = "No se pudo actualizar el horario. Recarga la página antes de enviar.";
+  });
+});
