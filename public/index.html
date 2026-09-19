@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Asistencia informática para particulares. Solicitudes 24/7 y atención ordinaria los fines de semana. Presupuesto previo y seguimiento privado.">
+<title>SolucionaTech · Soporte informático</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="site-header"><div class="wrap nav">
+<a class="brand" href="/" aria-label="SolucionaTech, inicio"><span class="brand-icon" aria-hidden="true">ST</span>Soluciona<span>Tech</span></a>
+<button id="menuButton" class="secondary menu-button" aria-expanded="false" aria-controls="navigation">Menú</button>
+<nav id="navigation" aria-label="Navegación principal"><a href="#servicios">Servicios</a><a href="#precios">Precios</a><a href="#como-funciona">Cómo funciona</a><a href="#consultar-ticket">Consultar ticket</a><a class="button" href="#ticket">Abrir ticket</a></nav>
+</div></header>
+<main id="contenido">
+<section class="hero"><div class="wrap hero-grid"><div>
+<p class="eyebrow light"><span class="dot"></span> Asistencia informática para particulares</p>
+<h1>Tu informática,<br><span>en buenas manos.</span></h1>
+<p class="lead">Soluciones claras para tus problemas informáticos. Reparación, configuración y puesta a punto, con atención personalizada.</p>
+<div class="actions"><a class="button" href="#ticket">Abrir ticket gratis <span aria-hidden="true">↗</span></a><a class="button ghost" href="#consultar-ticket">Consultar mi ticket</a></div>
+<p class="trust">✓ Sin compromiso &nbsp; ✓ Presupuesto previo &nbsp; ✓ Trato directo</p>
+</div><aside class="hero-card"><div class="card-top"><span class="mini-icon" aria-hidden="true">⌘</span><span class="badge">Soporte personal</span></div>
+<h2>Menos problemas.<br>Más tranquilidad.</h2><p>Cuéntame qué ocurre. Revisamos tu caso y acordamos la solución antes de intervenir.</p>
+<div class="hours-card"><span class="eyebrow">Horario ordinario</span><strong data-schedule>Sábados y domingos · 10:00–15:00</strong><span>Hora de Madrid · Solicitudes abiertas 24/7</span></div>
+</aside></div></section>
+<section id="servicios" class="wrap section"><p class="eyebrow">En qué puedo ayudarte</p><h2>Un servicio para cada problema</h2><p class="section-intro">Desde ese ordenador que va lento hasta una conexión que no responde.</p>
+<div class="service-grid">
+<article class="card"><span class="service-icon" aria-hidden="true">01</span><h3>Reparación de PC</h3><p>Errores de Windows, bloqueos y problemas de funcionamiento.</p></article>
+<article class="card"><span class="service-icon" aria-hidden="true">02</span><h3>Optimización</h3><p>Limpieza, actualizaciones y puesta a punto de tu equipo.</p></article>
+<article class="card"><span class="service-icon" aria-hidden="true">03</span><h3>Instalación y configuración</h3><p>Sistema operativo, programas, impresoras y periféricos.</p></article>
+<article class="card"><span class="service-icon" aria-hidden="true">04</span><h3>Redes y Wi-Fi</h3><p>Diagnóstico de conexión y configuración de tu red.</p></article>
+<article class="card"><span class="service-icon" aria-hidden="true">05</span><h3>Hardware</h3><p>Diagnóstico y asesoramiento sobre componentes y ampliaciones.</p></article>
+<article class="card"><span class="service-icon" aria-hidden="true">06</span><h3>Seguridad</h3><p>Eliminación de malware y configuración de protección básica.</p></article>
+</div></section>
+<section id="como-funciona" class="soft"><div class="wrap section"><p class="eyebrow">Sin complicaciones</p><h2>Tres pasos para volver a la normalidad</h2><ol class="steps"><li><span>1</span><h3>Cuéntame qué pasa</h3><p>Abre un ticket gratuito y guarda tu referencia privada.</p></li><li><span>2</span><h3>Revisamos tu caso</h3><p>Te contacto durante el horario de atención y confirmamos alcance y precio.</p></li><li><span>3</span><h3>Tú decides</h3><p>Solo empezamos cuando estás de acuerdo. Consulta los avances desde tu ticket.</p></li></ol></div></section>
+<section id="precios" class="wrap section"><div class="section-heading"><div><p class="eyebrow">Precios transparentes</p><h2>Sabes lo que pagas.</h2></div><p>Sin cobro al abrir el ticket.<br>Precio confirmado antes de empezar.</p></div>
+<div id="prices" class="price-list" aria-live="polite">Cargando tarifas…</div>
+<p class="notice"><strong>Tu confirmación, siempre primero.</strong><br>Si durante la intervención surge alguna complicación que afecte al coste o alcance, se notificará y pedirá confirmación al usuario antes de continuar.</p>
+</section>
+<section id="ticket" class="soft"><div class="wrap section split"><div><p class="eyebrow">Empezamos por escucharte</p><h2>Cuéntame qué necesitas</h2><p>La apertura del ticket no genera ningún cobro ni compromiso. Recibirás una referencia privada para consultar su estado.</p>
+<div class="notice"><strong>Solicitudes abiertas 24/7</strong><p>Puedes abrir un ticket las 24 horas del día, los 7 días de la semana. La atención y resolución ordinarias se gestionan exclusivamente durante los fines de semana.</p><b data-schedule>Sábados y domingos · 10:00–15:00</b><p>Las solicitudes extraordinarias fuera de horario están sujetas a disponibilidad y confirmación expresa.</p></div>
+</div>
+<form id="ticketForm" class="card form"><div class="two"><label>Nombre *<input name="name" autocomplete="name" required minlength="2" maxlength="80"></label><label>Teléfono / WhatsApp *<input name="phone" type="tel" autocomplete="tel" required maxlength="30"></label></div>
+<label>Email (opcional)<input name="email" type="email" autocomplete="email" maxlength="120"></label>
+<div class="two"><label>Categoría del problema *<select name="category" required><option value="">Selecciona una categoría</option></select></label><label>Dispositivo o servicio afectado *<select name="device" required><option value="">Selecciona una opción</option></select></label></div>
+<label>Servicio solicitado *<select name="service" required><option value="">Selecciona una opción</option></select></label>
+<label>Prioridad *<select name="priority" aria-describedby="priorityHelp"><option value="Normal">Normal</option><option value="Alta">Importante</option><option value="Urgente">Urgente</option></select></label>
+<p id="priorityHelp" class="help">Normal: puede esperar. Importante: limita tu uso. Urgente: impide una tarea esencial. La prioridad no garantiza atención inmediata ni activa un suplemento.</p>
+<fieldset id="urgencySection"><legend>Atención fuera de horario</legend><p id="hoursNotice" role="status">Comprobando horario…</p><div id="urgencyOptions" hidden>
+<label class="choice"><input type="radio" name="urgencyRequested" value="false" checked>Esperar al horario ordinario · sin suplemento</label>
+<label class="choice"><input type="radio" name="urgencyRequested" value="true"><span>Solicitar atención extraordinaria · <b id="feeLabel"></b></span></label>
+<label id="feeConsent" class="choice" hidden><input name="urgencyAccepted" type="checkbox"><span>Acepto el suplemento indicado si se confirma la atención extraordinaria. No se cobra ahora y no garantiza disponibilidad.</span></label>
+</div></fieldset>
+<label>Describe el problema *<textarea name="description" required minlength="10" maxlength="2000" rows="5" placeholder="Qué ocurre, desde cuándo y qué mensaje de error aparece. No incluyas contraseñas ni datos sensibles."></textarea></label>
+<p class="help">Usaremos tus datos para gestionar esta solicitud y contactarte, sobre la base de medidas precontractuales o del servicio contratado. Consulta el responsable, proveedores, conservación y tus derechos en la <a href="/privacidad">política de privacidad</a>.</p>
+<label class="choice"><input type="checkbox" name="privacyRead" required><span>He leído la <a href="/privacidad">información de privacidad</a> y las <a href="/terminos">condiciones del servicio</a>.</span></label>
+<input name="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+<div id="feedback" role="status" hidden></div><button type="submit" id="submitTicket" disabled>Abrir ticket gratis</button><p class="help center">Sin pago por adelantado. Tú decides antes de intervenir.</p>
+</form></div></section>
+<section id="consultar-ticket" class="wrap section split"><div><p class="eyebrow">Siempre al tanto</p><h2>Sigue tu ticket<br>en cualquier momento</h2><p>Introduce la referencia privada que recibiste. Verás el estado y el historial de cambios, sin datos personales ni notas internas.</p><p class="help">Guarda tu referencia y no la compartas: da acceso al seguimiento de tu solicitud.</p></div>
+<form id="statusForm" class="card form"><label>Referencia del ticket<input name="reference" required maxlength="80" autocomplete="off" spellcheck="false" placeholder="TK-XXXXXXXX-XXXXXXXXXXXX"></label><button>Consultar estado</button><div id="statusResult" role="status" hidden></div></form>
+</section></main>
+<footer><div class="wrap footer-grid"><div><a class="brand" href="/">Soluciona<span>Tech</span></a><p>Asistencia informática cercana.<br>Soluciones claras, sin sorpresas.</p></div><nav aria-label="Servicios"><a href="#servicios">Servicios</a><a href="#precios">Precios</a><a href="#ticket">Abrir ticket</a><a href="#consultar-ticket">Consultar ticket</a></nav><nav aria-label="Información legal"><a href="/aviso-legal">Aviso legal</a><a href="/terminos">Términos y condiciones</a><a href="/privacidad">Privacidad</a></nav></div><div class="wrap footer-bottom">© 2026 SolucionaTech · Atención personalizada para particulares</div></footer>
+<script src="/app.js" type="module"></script>
+</body></html>
