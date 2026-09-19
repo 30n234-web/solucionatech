@@ -3,15 +3,23 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js"
+    "check": "node --check server.js && node --check lib/app.js && node --check lib/support.js && node --check public/app.js && node --check public/admin.js && node --check public/legal.js && node --check public/shared.js",
+    "test": "node --test test/*.test.js",
+    "preview": "node test/preview.js",
+    "migrate": "node migrate.js"
   },
   "dependencies": {
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8"
   }
 }
