@@ -3,6 +3,7 @@ setupMenu();
 const form = document.querySelector("#ticketForm");
 const submit = document.querySelector("#submitTicket");
 const feedback = document.querySelector("#feedback");
+const serviceNotice = document.querySelector("#serviceNotice");
 let config;
 let available = false;
 let serverOffset = 0;
@@ -28,6 +29,18 @@ function refreshHours() {
   document.querySelector("#feeConsent").hidden = !requested;
   form.elements.urgencyAccepted.required = requested;
 }
+function refreshServiceNotice() {
+  const service = form.elements.service.value;
+  if (service.includes("solo Madrid") || service === "Montaje completo de ordenador (solo Madrid)") {
+    serviceNotice.textContent = "Este servicio requiere manipulación física del equipo y solo se atiende presencialmente en Madrid.";
+    return;
+  }
+  if (service === "Asesoramiento para montaje de PC") {
+    serviceNotice.textContent = "Servicio remoto por 10 €: selección de componentes y comprobación de compatibilidad según presupuesto y necesidades.";
+    return;
+  }
+  serviceNotice.textContent = service ? "La modalidad se confirmará al revisar tu solicitud." : "Selecciona un servicio para ver su modalidad.";
+}
 async function loadConfig(first = false) {
   const latest = await api("/api/config");
   const changedFee = config && config.schedule.urgencyFeeCents !== latest.schedule.urgencyFeeCents;
@@ -47,8 +60,10 @@ async function loadConfig(first = false) {
     `<div class="price-row"><div><strong>Atención extraordinaria fuera de horario</strong><p>Sujeta a disponibilidad y confirmación. Se suma al servicio; no se cobra al abrir el ticket.</p></div><span class="price-value">+${money(config.schedule.urgencyFeeCents)}</span></div>`;
   submit.disabled = false;
   refreshHours();
+  refreshServiceNotice();
 }
 form.elements.urgencyRequested.forEach(input => input.addEventListener("change", refreshHours));
+form.elements.service.addEventListener("change", refreshServiceNotice);
 form.addEventListener("submit", async event => {
   event.preventDefault();
   if (!available) return;
@@ -72,6 +87,7 @@ form.addEventListener("submit", async event => {
     document.querySelector("#statusForm").elements.reference.value = result.reference;
     form.reset();
     refreshHours();
+    refreshServiceNotice();
   } catch (error) {
     feedback.className = "error";
     feedback.textContent = error.message;
