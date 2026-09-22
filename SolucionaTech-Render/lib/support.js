@@ -9,11 +9,45 @@ export const STATUS_LABELS = {
 };
 export const STATUSES = Object.keys(STATUS_LABELS);
 export const PRIORITIES = ["Normal", "Alta", "Urgente"];
-export const CATEGORIES = ["Windows / Sistema operativo", "Hardware", "Software", "Internet / Wi-Fi / Redes", "Seguridad / Malware", "Rendimiento", "Instalación / Configuración", "Otro / no estoy seguro"];
-export const DEVICES = ["PC sobremesa", "Portátil", "Tablet", "Smartphone", "Router / Red", "Periférico", "Otro / no estoy seguro"];
-export const SERVICES = ["Diagnóstico previo", "Configuración básica / periféricos / impresoras", "Optimización y puesta a punto de PC lento", "Desinfección de malware / virus", "Instalación de sistema operativo sin formateo", "Formateo completo e instalación limpia", "Otro / no estoy seguro"];
+export const CATEGORIES = [
+  "Sistema operativo",
+  "Software y aplicaciones",
+  "Internet y redes",
+  "Seguridad y malware",
+  "Cuentas y accesos",
+  "Correo electrónico",
+  "Nube y sincronización",
+  "Copias de seguridad",
+  "Archivos y almacenamiento",
+  "Periféricos",
+  "Drivers y componentes",
+  "BIOS / UEFI",
+  "Hardware y diagnóstico físico (solo Madrid)",
+  "Instalación de componentes (solo Madrid)",
+  "Montaje de ordenador (solo Madrid)",
+  "Optimización y rendimiento",
+  "Actualización de PC",
+  "Asesoramiento de compra",
+  "Asesoramiento para montaje de PC",
+  "Otro / no estoy seguro",
+];
+export const DEVICES = ["PC sobremesa", "Portátil", "Tablet", "Smartphone", "Router / Red", "Impresora", "Otro periférico", "Servicio o cuenta online", "Otro / no estoy seguro"];
+export const SERVICES = [
+  "Diagnóstico previo",
+  "Asesoramiento para montaje de PC",
+  "Configuración básica / periféricos / impresoras",
+  "Optimización y puesta a punto de PC lento",
+  "Desinfección de malware / virus",
+  "Instalación de sistema operativo sin formateo",
+  "Formateo completo e instalación limpia",
+  "Revisión de hardware (solo Madrid)",
+  "Instalación de componentes (solo Madrid)",
+  "Montaje completo de ordenador (solo Madrid)",
+  "Otro / presupuesto personalizado",
+];
 export const PRICES = [
   ["Diagnóstico previo", 10, "Descontable si se repara"],
+  ["Asesoramiento para montaje de PC", 10, "Selección de componentes compatibles según presupuesto y necesidades · servicio remoto"],
   ["Configuración básica, periféricos o impresoras", 15, "Instalación y ajustes esenciales"],
   ["Optimización de PC lento", 20, "Limpieza lógica y puesta a punto"],
   ["Desinfección de malware o virus", 25, "Análisis, eliminación y comprobación"],
