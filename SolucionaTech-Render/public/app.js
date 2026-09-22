@@ -32,7 +32,7 @@ function refreshHours() {
 function refreshServiceNotice() {
   const service = form.elements.service.value;
   if (service.includes("solo Madrid") || service === "Montaje completo de ordenador (solo Madrid)") {
-    serviceNotice.textContent = "Este servicio requiere manipulación física del equipo y solo se atiende presencialmente en Madrid.";
+    serviceNotice.textContent = "Los diagnósticos físicos, reparaciones, instalaciones o sustituciones de componentes y montajes solo se atienden presencialmente en Madrid.";
     return;
   }
   if (service === "Asesoramiento para montaje de PC") {
