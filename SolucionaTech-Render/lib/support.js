@@ -9,42 +9,58 @@ export const STATUS_LABELS = {
 };
 export const STATUSES = Object.keys(STATUS_LABELS);
 export const PRIORITIES = ["Normal", "Alta", "Urgente"];
-export const CATEGORIES = [
-  "Sistema operativo",
-  "Software y aplicaciones",
-  "Internet y redes",
-  "Seguridad y malware",
-  "Cuentas y accesos",
-  "Correo electrónico",
-  "Nube y sincronización",
-  "Copias de seguridad",
-  "Archivos y almacenamiento",
-  "Periféricos",
-  "Drivers y componentes",
-  "BIOS / UEFI",
-  "Hardware, reparaciones y diagnóstico físico (solo Madrid)",
-  "Instalación o sustitución de componentes (solo Madrid)",
-  "Montaje de ordenador (solo Madrid)",
-  "Optimización y rendimiento",
-  "Actualización de PC",
-  "Asesoramiento de compra",
-  "Asesoramiento para montaje de PC",
-  "Otro / no estoy seguro",
-];
+export const SERVICE_GROUPS = {
+  "Sistema y programas": [
+    "Windows no inicia o muestra errores",
+    "Equipo lento u optimización",
+    "Instalación o configuración de programas",
+    "Formateo e instalación limpia",
+    "Drivers, actualizaciones o BIOS / UEFI",
+  ],
+  "Internet y redes": [
+    "Problemas de Wi-Fi o conexión por cable",
+    "Configuración de router o red doméstica",
+    "Conexión lenta, inestable o sin acceso",
+    "Configuración de impresora en red",
+  ],
+  "Seguridad, cuentas y correo": [
+    "Virus, malware o ventanas sospechosas",
+    "Problemas de acceso, contraseña o permisos",
+    "Configuración o errores de correo electrónico",
+    "Configuración de antivirus y seguridad",
+  ],
+  "Hardware (solo Madrid)": [
+    "Diagnóstico o revisión física del equipo (solo Madrid)",
+    "Reparación de hardware (solo Madrid)",
+    "Instalación o sustitución de componentes (solo Madrid)",
+    "Montaje completo de ordenador (solo Madrid)",
+    "Temperaturas, ruidos o problemas de encendido (solo Madrid)",
+  ],
+  "Periféricos y dispositivos": [
+    "Impresora o escáner",
+    "Monitor, teclado, ratón, webcam o micrófono",
+    "Dispositivo no reconocido",
+    "Configuración de móvil o tablet",
+  ],
+  "Archivos, discos y copias": [
+    "Disco lleno, particiones o almacenamiento",
+    "Copia de seguridad o restauración",
+    "Migración de archivos o cambio de disco",
+    "Nube y sincronización",
+  ],
+  "Asesoramiento y compra": [
+    "Asesoramiento para montaje de PC (10 €)",
+    "Elección de ordenador, componente o periférico",
+    "Actualización o ampliación de un PC",
+  ],
+  "Otro / no estoy seguro": [
+    "No sé identificar el problema",
+    "Otro servicio o presupuesto personalizado",
+  ],
+};
+export const CATEGORIES = Object.keys(SERVICE_GROUPS);
 export const DEVICES = ["PC sobremesa", "Portátil", "Tablet", "Smartphone", "Router / Red", "Impresora", "Otro periférico", "Servicio o cuenta online", "Otro / no estoy seguro"];
-export const SERVICES = [
-  "Diagnóstico previo",
-  "Asesoramiento para montaje de PC",
-  "Configuración básica / periféricos / impresoras",
-  "Optimización y puesta a punto de PC lento",
-  "Desinfección de malware / virus",
-  "Instalación de sistema operativo sin formateo",
-  "Formateo completo e instalación limpia",
-  "Diagnóstico y reparación de hardware (solo Madrid)",
-  "Instalación o sustitución de componentes (solo Madrid)",
-  "Montaje completo de ordenador (solo Madrid)",
-  "Otro / presupuesto personalizado",
-];
+export const SERVICES = Object.values(SERVICE_GROUPS).flat();
 export const PRICES = [
   ["Diagnóstico previo", 10, "Descontable si se repara"],
   ["Asesoramiento para montaje de PC", 10, "Selección de componentes compatibles según presupuesto y necesidades · servicio remoto"],

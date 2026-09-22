@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import helmet from "helmet";
-import { STATUS_LABELS, STATUSES, PRIORITIES, SERVICES, CATEGORIES, DEVICES, PRICES, supportConfig, isWithinHours, urgencyFor } from "./support.js";
+import { STATUS_LABELS, STATUSES, PRIORITIES, SERVICES, SERVICE_GROUPS, CATEGORIES, DEVICES, PRICES, supportConfig, isWithinHours, urgencyFor } from "./support.js";
 import { readFile } from "node:fs/promises";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -35,7 +35,7 @@ app.get("/", (_request, response) => response.sendFile("index.html", { root: pat
 app.get("/admin", (_request, response) => response.sendFile("admin.html", { root: path.join(root, "public") }));
 app.get(["/aviso-legal", "/terminos", "/privacidad"], (_request, response) => response.sendFile("legal.html", { root: path.join(root, "public") }));
 app.get("/api/config", (_request, response) => response.json({
-  services: SERVICES, categories: CATEGORIES, devices: DEVICES, priorities: PRIORITIES,
+  services: SERVICES, serviceGroups: SERVICE_GROUPS, categories: CATEGORIES, devices: DEVICES, priorities: PRIORITIES,
   statuses: STATUS_LABELS, prices: PRICES, schedule: config, withinHours: isWithinHours(now(), config),
   serverTime: now().toISOString(), privacyVersion: PRIVACY_VERSION,
   legal: { name: env.LEGAL_NAME || "", taxId: env.LEGAL_TAX_ID || "", address: env.LEGAL_ADDRESS || "", email: env.LEGAL_EMAIL || "" },
@@ -56,6 +56,7 @@ app.post("/api/tickets", async (request, response) => {
     const category = body.category === undefined ? null : clean(body.category, 80);
     const device = body.device === undefined ? null : clean(body.device, 80);
     if ((category !== null && !CATEGORIES.includes(category)) || (device !== null && !DEVICES.includes(device))) return response.status(400).json({ error: "Selecciona una categoría y dispositivo válidos." });
+    if (category !== null && !SERVICE_GROUPS[category]?.includes(service)) return response.status(400).json({ error: "El servicio no corresponde con la categoría seleccionada." });
     if (body.privacyVersion !== undefined && body.privacyVersion !== PRIVACY_VERSION) return response.status(400).json({ error: "Actualiza la página para revisar la información de privacidad." });
     const timestamp = now();
     let urgency;
