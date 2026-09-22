@@ -39,8 +39,9 @@ test("Existing data, migration, complete ticket lifecycle, privacy and filters",
   assert.equal(legacy.ticket.statusLabel, "En espera");
   assert.equal(legacy.history[0].kind, "snapshot");
   assert.equal(JSON.stringify(legacy).includes("Nota antigua"), false);
-  const body = { name: "Persona Prueba", phone: "611222333", email: "prueba@example.com", service: config.services[0], category: config.categories[0], device: config.devices[0], priority: "Urgente", description: "Mi ordenador no funciona desde ayer.", privacyVersion: config.privacyVersion };
+  const body = { name: "Persona Prueba", phone: "611222333", email: "prueba@example.com", category: config.categories[0], service: config.serviceGroups[config.categories[0]][0], device: config.devices[0], priority: "Urgente", description: "Mi ordenador no funciona desde ayer.", privacyVersion: config.privacyVersion };
   assert.equal((await request("/api/tickets", "POST", { ...body, category: "inventada" })).status, 400);
+  assert.equal((await request("/api/tickets", "POST", { ...body, service: config.serviceGroups[config.categories[1]][0] })).status, 400);
   assert.equal((await request("/api/tickets", "POST", { ...body, email: "mal formado" })).status, 400);
   assert.equal((await request("/api/tickets", "POST", { ...body, urgencyRequested: true })).status, 409);
   assert.equal((await request("/api/tickets", "POST", { ...body, urgencyRequested: true, urgencyAccepted: true, urgencyFeeCents: 1 })).status, 409);
