@@ -46,7 +46,7 @@
 <form id="ticketForm" class="card form"><div class="two"><label>Nombre *<input name="name" autocomplete="name" required minlength="2" maxlength="80"></label><label>Teléfono / WhatsApp *<input name="phone" type="tel" autocomplete="tel" required maxlength="30"></label></div>
 <label>Email (opcional)<input name="email" type="email" autocomplete="email" maxlength="120"></label>
 <div class="two"><label>Categoría del problema *<select name="category" required><option value="">Selecciona una categoría</option></select></label><label>Dispositivo o servicio afectado *<select name="device" required><option value="">Selecciona una opción</option></select></label></div>
-<label>Servicio solicitado *<select name="service" required><option value="">Selecciona una opción</option></select></label>
+<label>¿Qué necesitas? *<select name="service" required disabled><option value="">Selecciona primero una categoría</option></select></label>
 <p id="serviceNotice" class="help" role="status" aria-live="polite">Selecciona un servicio para ver su modalidad.</p>
 <label>Prioridad *<select name="priority" aria-describedby="priorityHelp"><option value="Normal">Normal</option><option value="Alta">Importante</option><option value="Urgente">Urgente</option></select></label>
 <p id="priorityHelp" class="help">Normal: puede esperar. Importante: limita tu uso. Urgente: impide una tarea esencial. La prioridad no garantiza atención inmediata ni activa un suplemento.</p>

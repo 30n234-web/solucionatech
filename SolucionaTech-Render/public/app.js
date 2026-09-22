@@ -35,11 +35,21 @@ function refreshServiceNotice() {
     serviceNotice.textContent = "Los diagnósticos físicos, reparaciones, instalaciones o sustituciones de componentes y montajes solo se atienden presencialmente en Madrid.";
     return;
   }
-  if (service === "Asesoramiento para montaje de PC") {
+  if (service === "Asesoramiento para montaje de PC (10 €)") {
     serviceNotice.textContent = "Servicio remoto por 10 €: selección de componentes y comprobación de compatibilidad según presupuesto y necesidades.";
     return;
   }
   serviceNotice.textContent = service ? "La modalidad se confirmará al revisar tu solicitud." : "Selecciona un servicio para ver su modalidad.";
+}
+function refreshServices() {
+  const category = form.elements.category.value;
+  const service = form.elements.service;
+  const previous = service.value;
+  service.replaceChildren(new Option(category ? "Selecciona una opción" : "Selecciona primero una categoría", ""));
+  for (const value of config.serviceGroups?.[category] || []) service.add(new Option(value, value));
+  service.disabled = !category;
+  if ([...service.options].some(option => option.value === previous)) service.value = previous;
+  refreshServiceNotice();
 }
 async function loadConfig(first = false) {
   const latest = await api("/api/config");
@@ -52,9 +62,10 @@ async function loadConfig(first = false) {
   document.querySelectorAll("[data-schedule]").forEach(node => { node.textContent = hours; });
   document.querySelector("#feeLabel").textContent = "+" + money(config.schedule.urgencyFeeCents);
   if (first) {
-    for (const [field, list] of [["service", config.services], ["category", config.categories], ["device", config.devices]]) {
+    for (const [field, list] of [["category", config.categories], ["device", config.devices]]) {
       for (const value of list) form.elements[field].add(new Option(value, value));
     }
+    refreshServices();
   }
   document.querySelector("#prices").innerHTML = config.prices.map(([name, price, description]) => `<div class="price-row"><div><strong>${esc(name)}</strong><p>${esc(description)}</p></div><span class="price-value">${money(price * 100)}</span></div>`).join("") +
     `<div class="price-row"><div><strong>Atención extraordinaria fuera de horario</strong><p>Sujeta a disponibilidad y confirmación. Se suma al servicio; no se cobra al abrir el ticket.</p></div><span class="price-value">+${money(config.schedule.urgencyFeeCents)}</span></div>`;
@@ -63,6 +74,7 @@ async function loadConfig(first = false) {
   refreshServiceNotice();
 }
 form.elements.urgencyRequested.forEach(input => input.addEventListener("change", refreshHours));
+form.elements.category.addEventListener("change", refreshServices);
 form.elements.service.addEventListener("change", refreshServiceNotice);
 form.addEventListener("submit", async event => {
   event.preventDefault();
@@ -86,6 +98,7 @@ form.addEventListener("submit", async event => {
     });
     document.querySelector("#statusForm").elements.reference.value = result.reference;
     form.reset();
+    refreshServices();
     refreshHours();
     refreshServiceNotice();
   } catch (error) {
