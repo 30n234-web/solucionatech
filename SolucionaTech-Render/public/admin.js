@@ -24,8 +24,8 @@ async function load() {
     if (number !== requestNumber) return;
     tickets = data.tickets; truncated = data.truncated;
     login.hidden = true; dashboard.hidden = false;
-    $("#metrics").innerHTML = [["pending", "Pendientes"], ["urgent", "Urgentes pendientes"], ["resolved", "Resueltos"], ["closed", "Cerrados"], ["total", "Total"]].map(([key, title]) =>
-      `<div class="metric"><strong>${esc(counts.metrics[key])}</strong><span>${title}</span></div>`).join("");
+    $("#metrics").innerHTML = [["pending", "Por atender", "↗"], ["urgent", "Necesitan atención", "!"], ["resolved", "Resueltos", "✓"], ["closed", "Archivados", "○"], ["total", "Desde el inicio", "∞"]].map(([key, title, mark]) =>
+      `<div class="metric metric-${key}"><span class="metric-mark" aria-hidden="true">${mark}</span><strong>${esc(counts.metrics[key])}</strong><span>${title}</span></div>`).join("");
     render();
   } catch (error) { if (number === requestNumber) errorAt("#adminError", error); }
 }
@@ -33,12 +33,12 @@ function render() {
   const query = $("#search").value.toLocaleLowerCase("es");
   const shown = tickets.filter(ticket => [ticket.reference, ticket.name, ticket.phone, ticket.service, ticket.description, ticket.category, ticket.device].join(" ").toLocaleLowerCase("es").includes(query));
   $("#summary").textContent = `${shown.length} solicitudes en esta vista.${truncated ? " Se muestran como máximo 250 tickets. Acota los filtros; la búsqueda se aplica a esta vista." : ""}`;
-  $("#tickets").innerHTML = shown.length ? shown.map(ticket => `<tr>
+  $("#tickets").innerHTML = shown.length ? shown.map(ticket => { const subject = ticket.description?.split("\n")[0] || ticket.service; return `<tr>
     <td data-label="Ticket / cliente"><strong>${esc(ticket.name)}</strong><small class="reference">${esc(ticket.reference)}</small><small>${dateTime(ticket.created_at)}</small></td>
-    <td data-label="Servicio">${esc(ticket.service)}<small>${esc(ticket.category || "Categoría sin especificar")} · ${esc(ticket.device || "Dispositivo sin especificar")}</small></td>
+    <td data-label="Incidencia"><strong>${esc(subject)}</strong><small>${esc(ticket.category || "Categoría sin especificar")}</small></td>
     <td data-label="Estado"><span class="badge">${esc(labels[ticket.status] || ticket.status)}</span></td>
     <td data-label="Prioridad / urgencia">${esc(ticket.priority === "Alta" ? "Importante" : ticket.priority)}<small>${ticket.urgency_requested ? "Suplemento solicitado: +" + money(ticket.urgency_fee_cents) : "Sin suplemento"}</small></td>
-    <td><button class="secondary" data-id="${esc(ticket.id)}" aria-label="Gestionar ticket de ${esc(ticket.name)}">Gestionar</button></td></tr>`).join("") : '<tr><td colspan="5">No hay tickets que coincidan con estos filtros.</td></tr>';
+    <td><button class="secondary" data-id="${esc(ticket.id)}" aria-label="Gestionar ticket de ${esc(ticket.name)}">Abrir <span aria-hidden="true">→</span></button></td></tr>`; }).join("") : '<tr><td colspan="5">No hay tickets que coincidan con estos filtros.</td></tr>';
 }
 $("#tickets").addEventListener("click", event => {
   const button = event.target.closest("[data-id]");
@@ -50,8 +50,10 @@ async function openTicket(id) {
   currentId = ticket.id;
   $("#detailError").hidden = true; $("#savedStatus").textContent = ""; $("#noteForm").reset();
   $("#dialogTitle").textContent = "Ticket " + ticket.reference;
+  const descriptionParts = String(ticket.description || "").split(/\n\s*\n/), subject = descriptionParts.length > 1 ? descriptionParts.shift() : ticket.service;
+  const detailText = descriptionParts.length ? descriptionParts.join("\n\n") : ticket.description;
   $("#detail").innerHTML = `<dl class="detail-grid"><div><dt>Cliente</dt><dd>${esc(ticket.name)}</dd></div><div><dt>Contacto</dt><dd>${esc(ticket.phone)}<br>${esc(ticket.email || "")}</dd></div><div><dt>Categoría / dispositivo</dt><dd>${esc(ticket.category || "Sin especificar")} · ${esc(ticket.device || "Sin especificar")}</dd></div><div><dt>Suplemento solicitado</dt><dd>${ticket.urgency_requested ? "+" + money(ticket.urgency_fee_cents) + " · sujeto a confirmación" : "No"}</dd></div></dl>
-    <h3>${esc(ticket.service)}</h3><p class="pre-wrap">${esc(ticket.description)}</p>`;
+    <h3>${esc(subject)}</h3><p class="pre-wrap">${esc(detailText)}</p>`;
   const digits = ticket.phone.replace(/\D/g, "");
   if (digits) {
     const link = document.createElement("a");
@@ -60,9 +62,19 @@ async function openTicket(id) {
     link.textContent = "Contactar por WhatsApp"; $("#detail").append(link);
   }
   $("#statusEdit").elements.status.value = ticket.status;
+  renderStatusChoices(ticket.status);
   dialog.showModal();
   await loadNotes(ticket.id);
 }
+function renderStatusChoices(current) {
+  $("#statusChoices").innerHTML = Object.entries(labels).map(([code, label]) => `<button type="button" class="status-choice ${code === current ? "is-active" : ""}" data-status="${esc(code)}" aria-pressed="${code === current}">${esc(label)}</button>`).join("");
+}
+$("#statusChoices").addEventListener("click", event => {
+  const button = event.target.closest("[data-status]");
+  if (!button) return;
+  $("#statusEdit").elements.status.value = button.dataset.status;
+  $("#statusChoices").querySelectorAll(".status-choice").forEach(item => { const active = item === button; item.classList.toggle("is-active", active); item.setAttribute("aria-pressed", String(active)); });
+});
 async function loadNotes(id) {
   $("#notes").textContent = "Cargando notas…";
   try {
