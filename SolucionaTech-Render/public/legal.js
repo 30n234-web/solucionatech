@@ -4,8 +4,8 @@ async function render() {
   try {
     const config = await api("/api/config"), legal = config.legal;
     const missing = value => esc(value || "Pendiente de completar por el titular");
-    const identity = '<dl><dt>Titular / responsable del tratamiento</dt><dd>' + missing(legal.name) + '</dd><dt>NIF / identificación fiscal</dt><dd>' + missing(legal.taxId) + '</dd><dt>Domicilio de contacto</dt><dd>' + missing(legal.address) + '</dd><dt>Correo de contacto y ejercicio de derechos</dt><dd>' + missing(legal.email) + '</dd></dl>';
-    if (!legal.name || !legal.taxId || !legal.address || !legal.email) {
+    const identity = '<dl><dt>Titular / responsable del tratamiento</dt><dd>' + missing(legal.name) + '</dd><dt>Correo de contacto y ejercicio de derechos</dt><dd>' + missing(legal.email) + '</dd></dl>';
+    if (!legal.name || !legal.email) {
       document.querySelector("#legalWarning").className = "legal-banner";
       document.querySelector("#legalWarning").textContent = "Información pendiente de completar: el titular debe incorporar sus datos identificativos y de contacto antes de publicar esta versión.";
     }
