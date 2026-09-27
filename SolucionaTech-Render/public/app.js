@@ -3,10 +3,53 @@ setupMenu();
 const form = document.querySelector("#ticketForm");
 const submit = document.querySelector("#submitTicket");
 const feedback = document.querySelector("#feedback");
-const serviceNotice = document.querySelector("#serviceNotice");
 let config;
 let available = false;
 let serverOffset = 0;
+const categoryGrid = document.querySelector("#categoryGrid");
+const issueDetails = document.querySelector("#issueDetails");
+const selectedCategory = document.querySelector("#selectedCategory");
+const categoryMeta = {
+  "Windows / Sistema operativo": ["window", "Windows y sistema", "Arranque, actualizaciones o errores del sistema"],
+  Hardware: ["chip", "Componentes y hardware", "Pantalla, batería, disco o piezas del equipo"],
+  Software: ["app", "Programas y aplicaciones", "Una aplicación no abre o funciona mal"],
+  "Internet / Wi-Fi / Redes": ["wifi", "Internet y Wi-Fi", "Conexión lenta, cortes o problemas de red"],
+  "Seguridad / Malware": ["shield", "Seguridad y malware", "Virus, avisos extraños o actividad sospechosa"],
+  Rendimiento: ["speed", "Equipo lento", "Bloqueos, lentitud o falta de espacio"],
+  "Instalación / Configuración": ["tools", "Instalación y configuración", "Programas, impresoras, cuentas o periféricos"],
+  "Otro / no estoy seguro": ["help", "No estoy seguro", "Descríbelo con tus palabras y te orientamos"],
+};
+const icons = {
+  window: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 9v11"/></svg>',
+  chip: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 1v3m6-3v3M9 20v3m6-3v3M1 9h3m-3 6h3m16-6h3m-3 6h3"/></svg>',
+  app: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg>',
+  wifi: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a12 12 0 0 1 16 0M7 13a8 8 0 0 1 10 0m-7 4a3 3 0 0 1 4 0"/><circle cx="12" cy="20" r="1"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6l8-3Z"/><path d="m9 12 2 2 4-5"/></svg>',
+  speed: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a9 9 0 1 1 16 0M12 13l4-4"/><circle cx="12" cy="17" r="1"/></svg>',
+  tools: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 7 3-3 3 3-3 3M4 20l7-7m-5-1 6 6"/><path d="M5 4a4 4 0 0 0 5 5l8 8-3 3-8-8a4 4 0 0 1-3-5Z"/></svg>',
+  help: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.2.9-1.2 1.8m0 4h.01"/></svg>',
+};
+function chooseCategory(value, focusDetails = true) {
+  const input = [...form.elements.category].find(item => item.value === value);
+  if (!input) return;
+  input.checked = true;
+  categoryGrid.classList.add("has-selection");
+  categoryGrid.querySelectorAll(".category-option").forEach(card => card.classList.toggle("is-selected", card.dataset.value === value));
+  selectedCategory.textContent = categoryMeta[value]?.[1] || value;
+  issueDetails.classList.add("is-open");
+  issueDetails.setAttribute("aria-hidden", "false");
+  issueDetails.inert = false;
+  if (focusDetails) window.setTimeout(() => issueDetails.querySelector("select")?.focus({ preventScroll: true }), 260);
+}
+function resetCategoryPicker(focus = false) {
+  form.elements.category.forEach(input => { input.checked = false; });
+  categoryGrid.classList.remove("has-selection");
+  categoryGrid.querySelectorAll(".category-option").forEach(card => card.classList.remove("is-selected"));
+  issueDetails.classList.remove("is-open");
+  issueDetails.setAttribute("aria-hidden", "true");
+  issueDetails.inert = true;
+  if (focus) categoryGrid.querySelector("input")?.focus();
+}
 function withinHours() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
     timeZone: config.schedule.timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
@@ -29,28 +72,6 @@ function refreshHours() {
   document.querySelector("#feeConsent").hidden = !requested;
   form.elements.urgencyAccepted.required = requested;
 }
-function refreshServiceNotice() {
-  const service = form.elements.service.value;
-  if (service.includes("solo Madrid") || service === "Montaje completo de ordenador (solo Madrid)") {
-    serviceNotice.textContent = "Los diagnósticos físicos, reparaciones, instalaciones o sustituciones de componentes y montajes solo se atienden presencialmente en Madrid.";
-    return;
-  }
-  if (service === "Asesoramiento para montaje de PC (10 €)") {
-    serviceNotice.textContent = "Servicio remoto por 10 €: selección de componentes y comprobación de compatibilidad según presupuesto y necesidades.";
-    return;
-  }
-  serviceNotice.textContent = service ? "La modalidad se confirmará al revisar tu solicitud." : "Selecciona un servicio para ver su modalidad.";
-}
-function refreshServices() {
-  const category = form.elements.category.value;
-  const service = form.elements.service;
-  const previous = service.value;
-  service.replaceChildren(new Option(category ? "Selecciona una opción" : "Selecciona primero una categoría", ""));
-  for (const value of config.serviceGroups?.[category] || []) service.add(new Option(value, value));
-  service.disabled = !category;
-  if ([...service.options].some(option => option.value === previous)) service.value = previous;
-  refreshServiceNotice();
-}
 async function loadConfig(first = false) {
   const latest = await api("/api/config");
   const changedFee = config && config.schedule.urgencyFeeCents !== latest.schedule.urgencyFeeCents;
@@ -62,20 +83,23 @@ async function loadConfig(first = false) {
   document.querySelectorAll("[data-schedule]").forEach(node => { node.textContent = hours; });
   document.querySelector("#feeLabel").textContent = "+" + money(config.schedule.urgencyFeeCents);
   if (first) {
-    for (const [field, list] of [["category", config.categories], ["device", config.devices]]) {
+    for (const [field, list] of [["service", config.services], ["device", config.devices]]) {
       for (const value of list) form.elements[field].add(new Option(value, value));
     }
-    refreshServices();
+    categoryGrid.innerHTML = config.categories.map((value, index) => {
+      const [icon, title, description] = categoryMeta[value] || ["help", value, "Selecciona esta categoría para continuar"];
+      return `<label class="category-option" data-value="${esc(value)}"><input type="radio" name="category" value="${esc(value)}" ${index === 0 ? "required" : ""}><span class="category-icon">${icons[icon]}</span><span class="category-copy"><b>${esc(title)}</b><small>${esc(description)}</small></span><span class="category-arrow" aria-hidden="true">→</span></label>`;
+    }).join("");
+    categoryGrid.addEventListener("change", event => chooseCategory(event.target.value));
+    issueDetails.inert = true;
   }
   document.querySelector("#prices").innerHTML = config.prices.map(([name, price, description]) => `<div class="price-row"><div><strong>${esc(name)}</strong><p>${esc(description)}</p></div><span class="price-value">${money(price * 100)}</span></div>`).join("") +
     `<div class="price-row"><div><strong>Atención extraordinaria fuera de horario</strong><p>Sujeta a disponibilidad y confirmación. Se suma al servicio; no se cobra al abrir el ticket.</p></div><span class="price-value">+${money(config.schedule.urgencyFeeCents)}</span></div>`;
   submit.disabled = false;
   refreshHours();
-  refreshServiceNotice();
 }
 form.elements.urgencyRequested.forEach(input => input.addEventListener("change", refreshHours));
-form.elements.category.addEventListener("change", refreshServices);
-form.elements.service.addEventListener("change", refreshServiceNotice);
+document.querySelector("#changeCategory").addEventListener("click", () => resetCategoryPicker(true));
 form.addEventListener("submit", async event => {
   event.preventDefault();
   if (!available) return;
@@ -98,9 +122,8 @@ form.addEventListener("submit", async event => {
     });
     document.querySelector("#statusForm").elements.reference.value = result.reference;
     form.reset();
-    refreshServices();
+    resetCategoryPicker();
     refreshHours();
-    refreshServiceNotice();
   } catch (error) {
     feedback.className = "error";
     feedback.textContent = error.message;

@@ -30,26 +30,29 @@
 <article class="card"><span class="service-icon" aria-hidden="true">02</span><h3>Optimización</h3><p>Limpieza, actualizaciones y puesta a punto de tu equipo.</p></article>
 <article class="card"><span class="service-icon" aria-hidden="true">03</span><h3>Instalación y configuración</h3><p>Sistema operativo, programas, impresoras y periféricos.</p></article>
 <article class="card"><span class="service-icon" aria-hidden="true">04</span><h3>Redes y Wi-Fi</h3><p>Diagnóstico de conexión y configuración de tu red.</p></article>
-<article class="card"><span class="service-icon" aria-hidden="true">05</span><h3>Hardware</h3><p>Diagnóstico, reparación, sustitución de componentes y montaje exclusivamente en Madrid.</p></article>
+<article class="card"><span class="service-icon" aria-hidden="true">05</span><h3>Hardware</h3><p>Diagnóstico y asesoramiento sobre componentes y ampliaciones.</p></article>
 <article class="card"><span class="service-icon" aria-hidden="true">06</span><h3>Seguridad</h3><p>Eliminación de malware y configuración de protección básica.</p></article>
-<article class="card"><span class="service-icon" aria-hidden="true">07</span><h3>Asesoramiento para montar tu PC</h3><p>Configuración equilibrada y comprobación de compatibilidad según tus necesidades y presupuesto, por 10 €.</p></article>
 </div></section>
 <section id="como-funciona" class="soft"><div class="wrap section"><p class="eyebrow">Sin complicaciones</p><h2>Tres pasos para volver a la normalidad</h2><ol class="steps"><li><span>1</span><h3>Cuéntame qué pasa</h3><p>Abre un ticket gratuito y guarda tu referencia privada.</p></li><li><span>2</span><h3>Revisamos tu caso</h3><p>Te contacto durante el horario de atención y confirmamos alcance y precio.</p></li><li><span>3</span><h3>Tú decides</h3><p>Solo empezamos cuando estás de acuerdo. Consulta los avances desde tu ticket.</p></li></ol></div></section>
 <section id="precios" class="wrap section"><div class="section-heading"><div><p class="eyebrow">Precios transparentes</p><h2>Sabes lo que pagas.</h2></div><p>Sin cobro al abrir el ticket.<br>Precio confirmado antes de empezar.</p></div>
 <div id="prices" class="price-list" aria-live="polite">Cargando tarifas…</div>
 <p class="notice"><strong>Tu confirmación, siempre primero.</strong><br>Si durante la intervención surge alguna complicación que afecte al coste o alcance, se notificará y pedirá confirmación al usuario antes de continuar.</p>
-<p class="notice"><strong>Todos los servicios de hardware se atienden solo en Madrid.</strong><br>Cualquier revisión o diagnóstico físico, reparación de hardware, instalación o sustitución de componentes y montaje de ordenadores se realiza únicamente de forma presencial en Madrid. El asesoramiento para elegir componentes sí está disponible de forma remota.</p>
 </section>
 <section id="ticket" class="soft"><div class="wrap section split"><div><p class="eyebrow">Empezamos por escucharte</p><h2>Cuéntame qué necesitas</h2><p>La apertura del ticket no genera ningún cobro ni compromiso. Recibirás una referencia privada para consultar su estado.</p>
 <div class="notice"><strong>Solicitudes abiertas 24/7</strong><p>Puedes abrir un ticket las 24 horas del día, los 7 días de la semana. La atención y resolución ordinarias se gestionan exclusivamente durante los fines de semana.</p><b data-schedule>Sábados y domingos · 10:00–15:00</b><p>Las solicitudes extraordinarias fuera de horario están sujetas a disponibilidad y confirmación expresa.</p></div>
 </div>
-<form id="ticketForm" class="card form"><div class="two"><label>Nombre *<input name="name" autocomplete="name" required minlength="2" maxlength="80"></label><label>Teléfono / WhatsApp *<input name="phone" type="tel" autocomplete="tel" required maxlength="30"></label></div>
+<form id="ticketForm" class="card form ticket-form">
+<div class="issue-heading"><span class="step-number" aria-hidden="true">1</span><div><p class="eyebrow">Elige por dónde empezamos</p><h3>¿Qué está fallando?</h3><p>Selecciona la opción que más se acerque. Podrás cambiarla después.</p></div></div>
+<fieldset class="category-picker"><legend class="visually-hidden">Categoría del problema</legend><div id="categoryGrid" class="category-grid" aria-describedby="categoryHint"></div><p id="categoryHint" class="help">Si no lo tienes claro, elige “No estoy seguro” y lo revisamos contigo.</p></fieldset>
+<div id="issueDetails" class="issue-details" aria-hidden="true"><div class="issue-details-inner">
+<div class="selection-summary"><div><span class="selection-kicker">Has elegido</span><strong id="selectedCategory"></strong></div><button type="button" id="changeCategory" class="text-button">Cambiar</button></div>
+<div class="issue-heading compact"><span class="step-number" aria-hidden="true">2</span><div><p class="eyebrow">Un poco más de contexto</p><h3>Cuéntame los detalles</h3></div></div>
+<div class="two"><label>Dispositivo o servicio afectado *<select name="device" required><option value="">Selecciona una opción</option></select></label><label>Servicio solicitado *<select name="service" required><option value="">Selecciona una opción</option></select></label></div>
+<fieldset class="priority-picker" aria-describedby="priorityHelp"><legend>¿Cuánto te está afectando?</legend><div class="priority-options"><label><input type="radio" name="priority" value="Normal" checked><span><b>Puede esperar</b><small>El equipo sigue siendo utilizable</small></span></label><label><input type="radio" name="priority" value="Alta"><span><b>Me limita</b><small>No puedo trabajar con normalidad</small></span></label><label><input type="radio" name="priority" value="Urgente"><span><b>Me bloquea</b><small>Impide una tarea esencial</small></span></label></div></fieldset>
+<p id="priorityHelp" class="help">La prioridad nos ayuda a ordenar los casos; no garantiza atención inmediata ni activa un suplemento.</p>
+<div class="form-divider"></div>
+<div class="two"><label>Nombre *<input name="name" autocomplete="name" required minlength="2" maxlength="80"></label><label>Teléfono / WhatsApp *<input name="phone" type="tel" autocomplete="tel" required maxlength="30"></label></div>
 <label>Email (opcional)<input name="email" type="email" autocomplete="email" maxlength="120"></label>
-<div class="two"><label>Categoría del problema *<select name="category" required><option value="">Selecciona una categoría</option></select></label><label>Dispositivo o servicio afectado *<select name="device" required><option value="">Selecciona una opción</option></select></label></div>
-<label>¿Qué necesitas? *<select name="service" required disabled><option value="">Selecciona primero una categoría</option></select></label>
-<p id="serviceNotice" class="help" role="status" aria-live="polite">Selecciona un servicio para ver su modalidad.</p>
-<label>Prioridad *<select name="priority" aria-describedby="priorityHelp"><option value="Normal">Normal</option><option value="Alta">Importante</option><option value="Urgente">Urgente</option></select></label>
-<p id="priorityHelp" class="help">Normal: puede esperar. Importante: limita tu uso. Urgente: impide una tarea esencial. La prioridad no garantiza atención inmediata ni activa un suplemento.</p>
 <fieldset id="urgencySection"><legend>Atención fuera de horario</legend><p id="hoursNotice" role="status">Comprobando horario…</p><div id="urgencyOptions" hidden>
 <label class="choice"><input type="radio" name="urgencyRequested" value="false" checked>Esperar al horario ordinario · sin suplemento</label>
 <label class="choice"><input type="radio" name="urgencyRequested" value="true"><span>Solicitar atención extraordinaria · <b id="feeLabel"></b></span></label>
@@ -60,7 +63,7 @@
 <label class="choice"><input type="checkbox" name="privacyRead" required><span>He leído la <a href="/privacidad">información de privacidad</a> y las <a href="/terminos">condiciones del servicio</a>.</span></label>
 <input name="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
 <div id="feedback" role="status" hidden></div><button type="submit" id="submitTicket" disabled>Abrir ticket gratis</button><p class="help center">Sin pago por adelantado. Tú decides antes de intervenir.</p>
-</form></div></section>
+</div></div></form></div></section>
 <section id="consultar-ticket" class="wrap section split"><div><p class="eyebrow">Siempre al tanto</p><h2>Sigue tu ticket<br>en cualquier momento</h2><p>Introduce la referencia privada que recibiste. Verás el estado y el historial de cambios, sin datos personales ni notas internas.</p><p class="help">Guarda tu referencia y no la compartas: da acceso al seguimiento de tu solicitud.</p></div>
 <form id="statusForm" class="card form"><label>Referencia del ticket<input name="reference" required maxlength="80" autocomplete="off" spellcheck="false" placeholder="TK-XXXXXXXX-XXXXXXXXXXXX"></label><button>Consultar estado</button><div id="statusResult" role="status" hidden></div></form>
 </section></main>
