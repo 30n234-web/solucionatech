@@ -18,6 +18,14 @@ const categoryMeta = {
   Rendimiento: ["speed", "Equipo lento", "Bloqueos, lentitud o falta de espacio"],
   "Instalación / Configuración": ["tools", "Instalación y configuración", "Programas, impresoras, cuentas o periféricos"],
   "Otro / no estoy seguro": ["help", "No estoy seguro", "Descríbelo con tus palabras y te orientamos"],
+  "Sistema y programas": ["window", "Sistema y programas", "Windows, aplicaciones, lentitud o errores"],
+  "Internet y redes": ["wifi", "Internet y redes", "Wi-Fi, router o problemas de conexión"],
+  "Seguridad, cuentas y correo": ["shield", "Seguridad, cuentas y correo", "Accesos, virus, contraseñas o email"],
+  "Hardware (solo Madrid)": ["chip", "Hardware", "Componentes, reparación o montaje en Madrid"],
+  "Periféricos y dispositivos": ["tools", "Periféricos y dispositivos", "Impresora, pantalla, móvil u otros equipos"],
+  "Archivos, discos y copias": ["speed", "Archivos y copias", "Almacenamiento, migración o recuperación"],
+  "Asesoramiento y compra": ["app", "Asesoramiento y compra", "Ayuda para elegir o mejorar tu equipo"],
+  "No estoy seguro": ["help", "No estoy seguro", "Descríbelo con tus palabras y te orientamos"],
 };
 const icons = {
   window: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 9v11"/></svg>',
@@ -39,7 +47,7 @@ function chooseCategory(value, focusDetails = true) {
   issueDetails.classList.add("is-open");
   issueDetails.setAttribute("aria-hidden", "false");
   issueDetails.inert = false;
-  if (focusDetails) window.setTimeout(() => issueDetails.querySelector("select")?.focus({ preventScroll: true }), 260);
+  if (focusDetails) window.setTimeout(() => issueDetails.querySelector('input[name="title"]')?.focus({ preventScroll: true }), 260);
 }
 function resetCategoryPicker(focus = false) {
   form.elements.category.forEach(input => { input.checked = false; });
@@ -83,9 +91,6 @@ async function loadConfig(first = false) {
   document.querySelectorAll("[data-schedule]").forEach(node => { node.textContent = hours; });
   document.querySelector("#feeLabel").textContent = "+" + money(config.schedule.urgencyFeeCents);
   if (first) {
-    for (const [field, list] of [["service", config.services], ["device", config.devices]]) {
-      for (const value of list) form.elements[field].add(new Option(value, value));
-    }
     categoryGrid.innerHTML = config.categories.map((value, index) => {
       const [icon, title, description] = categoryMeta[value] || ["help", value, "Selecciona esta categoría para continuar"];
       return `<label class="category-option" data-value="${esc(value)}"><input type="radio" name="category" value="${esc(value)}" ${index === 0 ? "required" : ""}><span class="category-icon">${icons[icon]}</span><span class="category-copy"><b>${esc(title)}</b><small>${esc(description)}</small></span><span class="category-arrow" aria-hidden="true">→</span></label>`;
@@ -108,6 +113,10 @@ form.addEventListener("submit", async event => {
   feedback.hidden = true;
   try {
     const body = Object.fromEntries(new FormData(form));
+    const title = body.title.trim();
+    body.description = `${title}\n\n${body.description.trim()}`;
+    body.service = config.services.at(-1);
+    body.device = config.devices.at(-1);
     body.urgencyRequested = body.urgencyRequested === "true";
     body.urgencyAccepted = form.elements.urgencyAccepted.checked;
     body.urgencyFeeCents = config.schedule.urgencyFeeCents;
